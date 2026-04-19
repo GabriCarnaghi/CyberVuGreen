@@ -4,24 +4,29 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>CyberStream v4.2</title>
+    <title>TERMINAL_CYBERDECK</title>
     <style>
-        body { background: #000; margin: 0; overflow: hidden; font-family: monospace; color: #0f0; }
-        canvas { width: 100vw; height: 100vh; display: block; }
-        .overlay { position: absolute; top: 10px; left: 10px; font-size: 10px; text-shadow: 0 0 5px #0f0; pointer-events: none; }
-        .scanline { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 4px, 3px 100%; pointer-events: none; }
+        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', monospace; color: #0f0; }
+        canvas { width: 100vw; height: 100vh; display: block; filter: blur(0.5px); }
+        .ui { position: absolute; width: 100%; height: 100%; pointer-events: none; padding: 15px; box-sizing: border-box; }
+        .top-left { top: 0; left: 0; font-size: 12px; line-height: 1.2; text-shadow: 0 0 5px #0f0; }
+        .bottom-right { bottom: 20px; right: 20px; text-align: right; font-size: 10px; opacity: 0.8; }
+        .scanlines { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%), linear-gradient(90deg, rgba(255,0,0,0.03), rgba(0,255,0,0.01), rgba(0,0,255,0.03)); background-size: 100% 3px, 2px 100%; pointer-events: none; }
     </style>
 </head>
 <body>
-    <div class="scanline"></div>
-    <div class="overlay">>> SIGNAL_ANALYSIS: ACTIVE<br>>> ENCRYPTION: BYPASSING...<br>>> CORE_TEMP: 32C</div>
+    <div class="scanlines"></div>
+    <div class="ui">
+        <div class="top-left" id="console">>> BOOTING_SYSTEM...<br>>> KERNEL_OK<br>>> LINK_ESTABLISHED</div>
+        <div class="bottom-right">MODEL: iPH-5_LEGACY<br>OS: iOS_10.3.4<br>STATUS: ENCRYPTED</div>
+    </div>
     <canvas id="c"></canvas>
 
     <script>
         const canvas = document.getElementById('c');
         const ctx = canvas.getContext('2d');
         let w, h;
-        let bars = 40;
+        const bars = 30;
         let data = Array(bars).fill(0);
 
         function resize() {
@@ -30,32 +35,39 @@
         }
 
         function draw() {
-            // Efecto ghosting/persistencia
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillStyle = 'rgba(0, 8, 0, 0.2)'; // Rastro verde muy oscuro
             ctx.fillRect(0, 0, w, h);
 
             const barWidth = w / bars;
-
             for (let i = 0; i < bars; i++) {
-                // Algoritmo matemático para simular ritmo (Seno + Ruido)
-                let target = Math.sin(Date.now() * 0.002 + i * 0.5) * 50 + 50;
-                target += Math.random() * 40; // Añade "nerviosismo" a la barra
-                
-                // Suavizado de movimiento (interpolación)
-                data[i] += (target - data[i]) * 0.2;
+                // Simulación de "tráfico de datos"
+                let target = Math.sin(Date.now() * 0.001 + i) * 40 + 50;
+                target += Math.random() * 50; 
+                data[i] += (target - data[i]) * 0.1;
 
-                const barHeight = (data[i] / 100) * (h * 0.7);
+                const barHeight = (data[i] / 100) * (h * 0.6);
                 
-                // Estilo Verde Neón Puro
-                ctx.fillStyle = '#0f0';
-                ctx.shadowBlur = 15;
+                // Efecto de brillo neón
+                ctx.shadowBlur = 10;
                 ctx.shadowColor = '#0f0';
+                ctx.fillStyle = '#0f0';
                 
-                // Dibujar bloque de la barra
-                ctx.fillRect(i * barWidth, h - barHeight, barWidth - 2, barHeight);
+                // Dibujar bloque estilo "celda"
+                ctx.fillRect(i * barWidth + 2, h - barHeight, barWidth - 4, barHeight);
             }
             requestAnimationFrame(draw);
         }
+
+        // Simulación de mensajes de consola
+        const consoleEl = document.getElementById('console');
+        const messages = [
+            ">> SCANNING_PORT_8080...", ">> PACKET_LOSS: 0%", ">> ENCRYPTING_STREAM...",
+            ">> BYPASSING_FIREWALL...", ">> SIGNAL_STRENGTH: NOMINAL", ">> UPLINK_STABLE"
+        ];
+        setInterval(() => {
+            const msg = messages[Math.floor(Math.random() * messages.length)];
+            consoleEl.innerHTML = ">> SYSTEM_MONITOR<br>>> " + msg + "<br>>> " + (Math.random() * 100).toFixed(2) + " kb/s";
+        }, 3000);
 
         window.addEventListener('resize', resize);
         resize();
