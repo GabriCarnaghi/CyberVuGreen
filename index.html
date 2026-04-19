@@ -4,151 +4,143 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>CYBERDECK_OS</title>
+    <title>CYBERDECK_OVERLOAD_V2</title>
     <style>
-        body { 
-            background-color: #000; 
-            color: #0f0; 
-            font-family: 'Courier New', Courier, monospace; 
-            margin: 0; 
-            overflow: hidden; 
-            font-size: 10px;
-            text-transform: uppercase;
+        :root { --neon: #0f0; --dim: #040; --bg: #000; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; font-size: 9px; }
+        
+        /* Patrón de fondo para llenar el vacío */
+        body::before {
+            content: ""; position: absolute; width: 200%; height: 200%;
+            background-image: radial-gradient(var(--dim) 1px, transparent 1px);
+            background-size: 15px 15px; opacity: 0.2; pointer-events: none;
         }
 
-        /* Contenedor Principal */
-        .deck-wrapper {
+        .container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            height: 100vh;
-            gap: 5px;
-            padding: 5px;
-            box-sizing: border-box;
+            grid-template-columns: 140px 1fr 140px;
+            grid-template-rows: 30px 1fr 60px;
+            height: 100vh; padding: 5px; gap: 4px; box-sizing: border-box;
+            position: relative; z-index: 1;
         }
 
-        /* Módulos */
-        .module {
-            border: 1px solid #040;
-            padding: 5px;
-            position: relative;
-            overflow: hidden;
-            background: rgba(0, 10, 0, 0.5);
-        }
+        .panel { border: 1px solid var(--dim); background: rgba(0,10,0,0.8); position: relative; overflow: hidden; }
+        .panel::before { content: ""; position: absolute; top: 0; left: 0; width: 5px; height: 5px; border-left: 2px solid var(--neon); border-top: 2px solid var(--neon); }
 
-        .module-title {
-            position: absolute;
-            top: 0; right: 5px;
-            font-size: 8px;
-            color: #0a0;
-            background: #000;
-            padding: 0 3px;
-        }
+        /* Cabecera */
+        header { grid-column: span 3; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--neon); padding: 0 10px; font-weight: bold; }
 
-        /* Terminal de Código (Scroll Infinito) */
-        #code-terminal {
-            grid-row: span 2;
-            color: #0f0;
-            font-size: 9px;
-            line-height: 1.1;
-        }
+        /* Columna Izquierda: Log Dinámico */
+        .sidebar-l { grid-row: span 1; font-size: 7px; line-height: 1.2; padding: 5px; }
 
-        /* Mapa de red / Gráfico */
-        #grid-display {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-color: #0f0;
-        }
+        /* Centro: Main Visualizer */
+        .main-display { display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid var(--neon); box-shadow: inset 0 0 15px var(--dim); }
+        #scope { width: 100%; height: 80px; }
 
-        /* Status bars */
-        .status-line { margin-bottom: 4px; }
-        .bar-bg { width: 100%; height: 6px; background: #010; border: 1px solid #040; margin-top: 2px; }
-        .bar-fill { height: 100%; background: #0f0; width: 0%; transition: width 0.5s; }
+        /* Derecha: Stats Rápidos */
+        .sidebar-r { padding: 5px; display: flex; flex-direction: column; gap: 8px; }
+        .stat-box { border: 1px solid var(--dim); padding: 3px; background: #010; }
+        .mini-bar { height: 4px; background: var(--dim); margin-top: 3px; position: relative; }
+        .fill { height: 100%; background: var(--neon); transition: width 0.3s; }
 
-        /* Escáner de líneas horizontal */
-        .scanline {
-            width: 100%; height: 2px; background: rgba(0, 255, 0, 0.1);
-            position: absolute; top: 0; left: 0;
-            animation: scan 4s linear infinite;
-        }
+        /* Footer: Mapa de sectores */
+        footer { grid-column: span 3; display: grid; grid-template-columns: repeat(20, 1fr); gap: 2px; padding: 5px; }
+        .sector { background: var(--dim); height: 8px; opacity: 0.3; }
+        .sector.active { background: var(--neon); opacity: 1; box-shadow: 0 0 5px var(--neon); }
 
-        @keyframes scan { from { top: 0%; } to { top: 100%; } }
+        .glitch-text { animation: blink 0.2s infinite; color: #fff; font-weight: bold; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } }
     </style>
 </head>
 <body>
-    <div class="scanline"></div>
-    <div class="deck-wrapper">
-        
-        <div class="module" id="code-terminal">
-            <div class="module-title">SYS_LOG_V8.4</div>
-            <div id="log-content"></div>
-        </div>
 
-        <div class="module">
-            <div class="module-title">HARDWARE_MONITOR</div>
-            <div class="status-line">
-                CPU_LOAD: <span id="cpu-val">22%</span>
-                <div class="bar-bg"><div id="cpu-bar" class="bar-fill"></div></div>
-            </div>
-            <div class="status-line" style="margin-top:10px;">
-                NET_LINK: <span id="net-val">STABLE</span>
-                <div class="bar-bg"><div id="net-bar" class="bar-fill" style="width: 90%"></div></div>
-            </div>
-        </div>
+<div class="container">
+    <header>
+        <span>DECK_ID: G-C_05</span>
+        <span class="glitch-text">LIVE_LINK</span>
+        <span id="clock">00:00:00</span>
+    </header>
 
-        <div class="module" id="grid-display">
-            <div class="module-title">SEC_MATRIX</div>
-            <canvas id="matrix-canvas"></canvas>
-        </div>
+    <div class="panel sidebar-l" id="log">>> INITIALIZING...</div>
 
+    <div class="panel main-display">
+        <canvas id="scope"></canvas>
+        <div style="font-size: 8px; margin-top: 10px;">CORE_WAVEFORM_ANALYSIS</div>
+        <div id="coords" style="font-size: 7px; opacity: 0.6;">X:00 Y:00 Z:00</div>
     </div>
 
-    <script>
-        // --- LOG DE CÓDIGO ---
-        const logContent = document.getElementById('log-content');
-        const phrases = [
-            "Initializing neural_link...", "Accessing encrypted_sector...", "Packet bypass: OK",
-            "Root_access granted", "Syncing with Biqu_B1...", "Temp_monitor: 215C",
-            "Overriding security_v3", "Fetching datastream...", "Buffer_overflow detected",
-            "Stability: 99.8%", "Tracing IP: 192.168.1.104", "Hex_dump complete"
-        ];
+    <div class="panel sidebar-r">
+        <div class="stat-box">TEMP: <span id="t-val">32</span>°C <div class="mini-bar"><div id="t-bar" class="fill" style="width:40%"></div></div></div>
+        <div class="stat-box">RAM: <span id="r-val">88</span>% <div class="mini-bar"><div id="r-bar" class="fill" style="width:88%"></div></div></div>
+        <div class="stat-box">SIGNAL: <div class="mini-bar"><div id="s-bar" class="fill" style="width:95%"></div></div></div>
+        <div style="font-size: 7px; text-align: center; margin-top: 10px;">ENCRYPTING...<br>[|||||||---]</div>
+    </div>
 
-        setInterval(() => {
-            const p = document.createElement('div');
-            p.textContent = ">> " + phrases[Math.floor(Math.random() * phrases.length)];
-            logContent.appendChild(p);
-            if (logContent.childNodes.length > 25) logContent.removeChild(logContent.firstChild);
-        }, 800);
+    <footer class="panel" id="memory-map"></footer>
+</div>
 
-        // --- BARRAS DE ESTADO ---
-        setInterval(() => {
-            const cpu = Math.floor(Math.random() * 40) + 10;
-            document.getElementById('cpu-val').textContent = cpu + "%";
-            document.getElementById('cpu-bar').style.width = cpu + "%";
-        }, 2000);
+<script>
+    // 1. Reloj Real-Time
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('clock').innerText = now.toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
 
-        // --- MINI MATRIX / GRID ---
-        const canvas = document.getElementById('matrix-canvas');
-        const ctx = canvas.getContext('2d');
-        function resizeMatrix() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
+    // 2. Log de Datos Complejo
+    const log = document.getElementById('log');
+    const codes = ["0x4F2", "GET /api/v1", "SYNC_ERR", "OVERRIDE", "TCP_EST", "DB_DUMP", "HEX_V8", "KILL_PROC"];
+    setInterval(() => {
+        const line = document.createElement('div');
+        line.innerHTML = `> ${codes[Math.floor(Math.random()*codes.length)]}: <span style="color:#fff">${(Math.random()*9999).toFixed(0)}</span>`;
+        log.appendChild(line);
+        if(log.childNodes.length > 20) log.removeChild(log.firstChild);
+        log.scrollTop = log.scrollHeight;
+    }, 400);
+
+    // 3. Osciloscopio Central
+    const canvas = document.getElementById('scope');
+    const ctx = canvas.getContext('2d');
+    let offset = 0;
+    function drawScope() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.strokeStyle = '#0f0';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for(let x=0; x<canvas.width; x++) {
+            let y = canvas.height/2 + Math.sin(x*0.05 + offset) * 20 + Math.sin(x*0.02) * 10;
+            if(x===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
-        window.addEventListener('resize', resizeMatrix);
-        resizeMatrix();
+        ctx.stroke();
+        offset += 0.1;
+        
+        // Update Coords ficticias
+        document.getElementById('coords').innerText = `X:${(Math.random()*99).toFixed(0)} Y:${offset.toFixed(1)} Z:04`;
+        requestAnimationFrame(drawScope);
+    }
+    drawScope();
 
-        function drawMatrix() {
-            ctx.fillStyle = 'rgba(0,0,0,0.1)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#0f0';
-            ctx.font = '8px monospace';
-            for(let i=0; i<10; i++) {
-                ctx.fillText(Math.random() > 0.5 ? "1" : "0", Math.random()*canvas.width, Math.random()*canvas.height);
-            }
-            requestAnimationFrame(drawMatrix);
+    // 4. Mapa de sectores (Footer)
+    const footer = document.getElementById('memory-map');
+    for(let i=0; i<60; i++) {
+        const sec = document.createElement('div');
+        sec.className = 'sector';
+        footer.appendChild(sec);
+    }
+    setInterval(() => {
+        const sectors = document.querySelectorAll('.sector');
+        sectors.forEach(s => s.classList.remove('active'));
+        for(let i=0; i<10; i++) {
+            sectors[Math.floor(Math.random()*60)].classList.add('active');
         }
-        drawMatrix();
-    </script>
+    }, 150);
+
+    // 5. Animación de Barras
+    setInterval(() => {
+        const r = Math.random() * 100;
+        document.getElementById('r-val').innerText = r.toFixed(0);
+        document.getElementById('r-bar').style.width = r + "%";
+    }, 3000);
+</script>
 </body>
 </html>
