@@ -4,52 +4,57 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>CYBERDECK_OVERLOAD_V2</title>
+    <title>CYBERDECK_LINK_0x4F2</title>
     <style>
-        :root { --neon: #0f0; --dim: #040; --bg: #000; }
-        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; font-size: 9px; }
+        :root { --cian: #0ff; --magenta: #f0f; --bg: #000; --dim: #055; }
+        body { background: var(--bg); color: var(--cian); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; font-size: 8px; }
         
-        /* Patrón de fondo para llenar el vacío */
+        /* Patrón hexagonal de fondo (muy sutil) */
         body::before {
-            content: ""; position: absolute; width: 200%; height: 200%;
-            background-image: radial-gradient(var(--dim) 1px, transparent 1px);
-            background-size: 15px 15px; opacity: 0.2; pointer-events: none;
+            content: ""; position: absolute; width: 100%; height: 100%;
+            background-image: linear-gradient(30deg, var(--dim) 1px, transparent 1px), linear-gradient(150deg, var(--dim) 1px, transparent 1px), linear-gradient(270deg, var(--dim) 1px, transparent 1px);
+            background-size: 15px 15px; opacity: 0.15; pointer-events: none;
         }
 
         .container {
             display: grid;
             grid-template-columns: 140px 1fr 140px;
-            grid-template-rows: 30px 1fr 60px;
+            grid-template-rows: 25px 1fr 1fr 25px;
             height: 100vh; padding: 5px; gap: 4px; box-sizing: border-box;
             position: relative; z-index: 1;
         }
 
-        .panel { border: 1px solid var(--dim); background: rgba(0,10,0,0.8); position: relative; overflow: hidden; }
-        .panel::before { content: ""; position: absolute; top: 0; left: 0; width: 5px; height: 5px; border-left: 2px solid var(--neon); border-top: 2px solid var(--neon); }
+        .panel { border: 1px solid var(--dim); background: rgba(0, 10, 10, 0.8); position: relative; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,255,255,0.1); }
+        .panel::before { content: ""; position: absolute; top: 0; left: 0; width: 5px; height: 5px; border-left: 2px solid var(--magenta); border-top: 2px solid var(--magenta); }
 
-        /* Cabecera */
-        header { grid-column: span 3; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--neon); padding: 0 10px; font-weight: bold; }
+        /* Cabecera y Footer */
+        header, footer { grid-column: span 3; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--cian); padding: 0 10px; font-weight: bold; }
+        footer { border-top: 1px solid var(--cian); border-bottom: none; font-size: 7px; color: #5aa; }
 
-        /* Columna Izquierda: Log Dinámico */
-        .sidebar-l { grid-row: span 1; font-size: 7px; line-height: 1.2; padding: 5px; }
+        /* Doble Log (Cian y Magenta) */
+        .sidebar-l { grid-row: span 2; display: flex; flex-direction: column; font-size: 7px; line-height: 1.1; }
+        .log-c { color: var(--cian); height: 50%; overflow: hidden; padding: 3px; }
+        .log-m { color: var(--magenta); height: 50%; overflow: hidden; padding: 3px; border-top: 1px dashed var(--dim); }
 
-        /* Centro: Main Visualizer */
-        .main-display { display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid var(--neon); box-shadow: inset 0 0 15px var(--dim); }
-        #scope { width: 100%; height: 80px; }
+        /* Centro: Radar y Huella */
+        .main-visuals { grid-column: 2; grid-row: 2 / span 2; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 1px solid var(--magenta); box-shadow: inset 0 0 15px rgba(255,0,255,0.15); }
+        
+        /* Radar Circular */
+        #radar-display { width: 100px; height: 100px; position: relative; display: flex; justify-content: center; align-items: center; }
+        #radar-display canvas { border-radius: 50%; border: 1px solid var(--cian); }
+        
+        /* Huella Dactilar HUD */
+        #finger-print { width: 60px; height: 80px; position: relative; margin-top: 10px; border: 1px dashed var(--magenta); }
+        #finger-print::after { content: "VERIFYING..."; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%); font-size: 7px; color: var(--magenta); animation: blink 0.5s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* Derecha: Stats Rápidos */
-        .sidebar-r { padding: 5px; display: flex; flex-direction: column; gap: 8px; }
-        .stat-box { border: 1px solid var(--dim); padding: 3px; background: #010; }
+        /* Derecha: Hardware Monitor */
+        .sidebar-r { grid-row: span 2; padding: 5px; display: flex; flex-direction: column; gap: 6px; }
+        .stat-box { border: 1px solid var(--dim); padding: 3px; background: rgba(0,0,0,0.8); }
         .mini-bar { height: 4px; background: var(--dim); margin-top: 3px; position: relative; }
-        .fill { height: 100%; background: var(--neon); transition: width 0.3s; }
+        .fill-c { height: 100%; background: var(--cian); transition: width 0.3s; }
+        .fill-m { height: 100%; background: var(--magenta); transition: width 0.3s; }
 
-        /* Footer: Mapa de sectores */
-        footer { grid-column: span 3; display: grid; grid-template-columns: repeat(20, 1fr); gap: 2px; padding: 5px; }
-        .sector { background: var(--dim); height: 8px; opacity: 0.3; }
-        .sector.active { background: var(--neon); opacity: 1; box-shadow: 0 0 5px var(--neon); }
-
-        .glitch-text { animation: blink 0.2s infinite; color: #fff; font-weight: bold; }
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } }
     </style>
 </head>
 <body>
@@ -57,26 +62,38 @@
 <div class="container">
     <header>
         <span>DECK_ID: G-C_05</span>
-        <span class="glitch-text">LIVE_LINK</span>
+        <span style="color:var(--magenta)">LIVE_LINK: [0x4F2]</span>
         <span id="clock">00:00:00</span>
     </header>
 
-    <div class="panel sidebar-l" id="log">>> INITIALIZING...</div>
+    <div class="panel sidebar-l">
+        <div class="log-c" id="log-cian"></div>
+        <div class="log-m" id="log-magenta"></div>
+    </div>
 
-    <div class="panel main-display">
-        <canvas id="scope"></canvas>
-        <div style="font-size: 8px; margin-top: 10px;">CORE_WAVEFORM_ANALYSIS</div>
-        <div id="coords" style="font-size: 7px; opacity: 0.6;">X:00 Y:00 Z:00</div>
+    <div class="panel main-visuals">
+        <div id="radar-display">
+            <canvas id="canvas-radar"></canvas>
+            <div style="font-size: 7px; position: absolute; color: var(--cian);">RADAR_SYNC</div>
+        </div>
+        <div id="finger-print">
+            <canvas id="canvas-finger"></canvas>
+        </div>
+        <div style="font-size: 8px; margin-top: 5px;">BIOMETRIC_MATRIX</div>
     </div>
 
     <div class="panel sidebar-r">
-        <div class="stat-box">TEMP: <span id="t-val">32</span>°C <div class="mini-bar"><div id="t-bar" class="fill" style="width:40%"></div></div></div>
-        <div class="stat-box">RAM: <span id="r-val">88</span>% <div class="mini-bar"><div id="r-bar" class="fill" style="width:88%"></div></div></div>
-        <div class="stat-box">SIGNAL: <div class="mini-bar"><div id="s-bar" class="fill" style="width:95%"></div></div></div>
-        <div style="font-size: 7px; text-align: center; margin-top: 10px;">ENCRYPTING...<br>[|||||||---]</div>
+        <div class="stat-box">CORE_TEMP: <span id="t-val"></span>C <div class="mini-bar"><div id="t-bar" class="fill-c"></div></div></div>
+        <div class="stat-box" style="border-color:var(--magenta)">NET_LINK: [STABLE] <div class="mini-bar" style="background:rgba(255,0,255,0.1);"><div id="n-bar" class="fill-m" style="width:95%"></div></div></div>
+        <div class="stat-box">CPU_LOAD: <span id="c-val"></span>% <div class="mini-bar"><div id="c-bar" class="fill-c"></div></div></div>
+        <div style="font-size: 7px; text-align: center; margin-top: 5px;">ACCESSING SECTOR:<br>0xFF-12</div>
     </div>
 
-    <footer class="panel" id="memory-map"></footer>
+    <footer>
+        <span>SECTOR: ACTIVE</span>
+        <span>LINK: UPLINK=1 // DOWNLINK=1</span>
+        <span>STATUS: ENCRYPTED</span>
+    </footer>
 </div>
 
 <script>
@@ -87,60 +104,74 @@
     }
     setInterval(updateClock, 1000);
 
-    // 2. Log de Datos Complejo
-    const log = document.getElementById('log');
-    const codes = ["0x4F2", "GET /api/v1", "SYNC_ERR", "OVERRIDE", "TCP_EST", "DB_DUMP", "HEX_V8", "KILL_PROC"];
-    setInterval(() => {
+    // 2. Doble Log (Cian y Magenta)
+    const logCian = document.getElementById('log-cian');
+    const logMagenta = document.getElementById('log-magenta');
+    const phrases = ["0x1A4F", "GET /api", "OVERRIDE", "TCP_EST", "DB_DUMP", "HEX_V8", "SYNC_ERR", "KILL_PROC"];
+    
+    function addLog(el, phrasesArray, color) {
         const line = document.createElement('div');
-        line.innerHTML = `> ${codes[Math.floor(Math.random()*codes.length)]}: <span style="color:#fff">${(Math.random()*9999).toFixed(0)}</span>`;
-        log.appendChild(line);
-        if(log.childNodes.length > 20) log.removeChild(log.firstChild);
-        log.scrollTop = log.scrollHeight;
-    }, 400);
+        line.innerHTML = `> ${phrasesArray[Math.floor(Math.random()*phrasesArray.length)]}: ${(Math.random()*999).toFixed(0)}`;
+        el.appendChild(line);
+        if(el.childNodes.length > 15) el.removeChild(el.firstChild);
+        el.scrollTop = el.scrollHeight;
+    }
+    setInterval(() => addLog(logCian, phrases, 'cian'), 600);
+    setInterval(() => addLog(logMagenta, phrases, 'magenta'), 400);
 
-    // 3. Osciloscopio Central
-    const canvas = document.getElementById('scope');
-    const ctx = canvas.getContext('2d');
+    // 3. Radar Circular Táctico
+    const radar = document.getElementById('canvas-radar');
+    const ctxR = radar.getContext('2d');
+    radar.width = 90; radar.height = 90;
     let offset = 0;
-    function drawScope() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#0f0';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for(let x=0; x<canvas.width; x++) {
-            let y = canvas.height/2 + Math.sin(x*0.05 + offset) * 20 + Math.sin(x*0.02) * 10;
-            if(x===0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    function drawRadar() {
+        ctxR.clearRect(0, 0, radar.width, radar.height);
+        ctxR.strokeStyle = '#0ff';
+        ctxR.lineWidth = 1;
+        ctxR.beginPath();
+        const center = radar.width / 2;
+        const radius = center - 5;
+        for(let a=0; a<360; a++) {
+            let r = radius + Math.sin(a*0.1 + offset) * 10;
+            let x = center + Math.cos(a * Math.PI / 180) * r;
+            let y = center + Math.sin(a * Math.PI / 180) * r;
+            if(a===0) ctxR.moveTo(x, y); else ctxR.lineTo(x, y);
         }
-        ctx.stroke();
-        offset += 0.1;
-        
-        // Update Coords ficticias
-        document.getElementById('coords').innerText = `X:${(Math.random()*99).toFixed(0)} Y:${offset.toFixed(1)} Z:04`;
-        requestAnimationFrame(drawScope);
+        ctxR.closePath(); ctxR.stroke(); offset += 0.05;
+        requestAnimationFrame(drawRadar);
     }
-    drawScope();
+    drawRadar();
 
-    // 4. Mapa de sectores (Footer)
-    const footer = document.getElementById('memory-map');
-    for(let i=0; i<60; i++) {
-        const sec = document.createElement('div');
-        sec.className = 'sector';
-        footer.appendChild(sec);
-    }
-    setInterval(() => {
-        const sectors = document.querySelectorAll('.sector');
-        sectors.forEach(s => s.classList.remove('active'));
-        for(let i=0; i<10; i++) {
-            sectors[Math.floor(Math.random()*60)].classList.add('active');
+    // 4. Huella Dactilar (Abstracta)
+    const finger = document.getElementById('canvas-finger');
+    const ctxF = finger.getContext('2d');
+    finger.width = 60; finger.height = 70;
+    function drawFinger() {
+        ctxF.clearRect(0, 0, finger.width, finger.height);
+        ctxF.strokeStyle = '#f0f';
+        ctxF.lineWidth = 2;
+        for(let i=0; i<4; i++) {
+            ctxF.beginPath();
+            ctxF.arc(finger.width/2, finger.height/2 + i*5, 10 + i*5, 0, Math.PI * 2);
+            ctxF.stroke();
         }
-    }, 150);
+        // Línea de escaneo
+        ctxF.fillStyle = 'rgba(255,0,255,0.2)';
+        ctxF.fillRect(0, (Date.now() % 3000) / 3000 * finger.height, finger.width, 10);
+        requestAnimationFrame(drawFinger);
+    }
+    drawFinger();
 
-    // 5. Animación de Barras
+    // 5. Animación de Barras de Hardware
     setInterval(() => {
-        const r = Math.random() * 100;
-        document.getElementById('r-val').innerText = r.toFixed(0);
-        document.getElementById('r-bar').style.width = r + "%";
-    }, 3000);
+        const t = Math.floor(Math.random() * 20) + 30;
+        document.getElementById('t-val').innerText = t;
+        document.getElementById('t-bar').style.width = t + "%";
+        const cpu = Math.floor(Math.random() * 50) + 10;
+        document.getElementById('c-val').innerText = cpu;
+        document.getElementById('c-bar').style.width = cpu + "%";
+    }, 2500);
+
 </script>
 </body>
 </html>
