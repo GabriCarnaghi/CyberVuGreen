@@ -53,42 +53,53 @@
     
     <div id="msg">INITIALIZE_LINK</div>
 
-    <script>
+<script>
         var canvas = document.getElementById('canvas');
         var ctx = canvas.getContext('2d');
         var msg = document.getElementById('msg');
         var audioCtx, analyser, source, dataArray, bufferLength;
 
         function iniciarAudio() {
-            // 1. Crear o reanudar el contexto (Vital para iOS)
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            try {
+                // 1. Compatibilidad total de AudioContext para iOS viejo
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+
+                // 2. Compatibilidad total de getUserMedia (el truco para iPhone 5)
+                navigator.getUserMedia = (navigator.getUserMedia ||
+                                          navigator.webkitGetUserMedia ||
+                                          navigator.mozGetUserMedia ||
+                                          navigator.msGetUserMedia);
+
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+
+                if (navigator.getUserMedia) {
+                    navigator.getUserMedia({ audio: true }, 
+                        function(stream) {
+                            msg.style.display = 'none';
+                            analyser = audioCtx.createAnalyser();
+                            analyser.fftSize = 128;
+                            source = audioCtx.createMediaStreamSource(stream);
+                            source.connect(analyser);
+                            bufferLength = analyser.frequencyBinCount;
+                            dataArray = new Uint8Array(bufferLength);
+                            dibujar();
+                        }, 
+                        function(err) {
+                            alert("Error Mic: " + err.name);
+                        }
+                    );
+                } else {
+                    alert("Tu Safari no soporta micrófono web.");
+                }
+            } catch (e) {
+                alert("Error de inicio: " + e);
             }
-            
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-
-            msg.style.display = 'none';
-
-            // 2. Solicitar acceso al micrófono con sintaxis compatible
-            var constraints = { audio: true, video: false };
-            
-            navigator.mediaDevices.getUserMedia(constraints)
-            .then(function(stream) {
-                source = audioCtx.createMediaStreamSource(stream);
-                source.connect(analyser);
-                bufferLength = analyser.frequencyBinCount;
-                dataArray = new Uint8Array(bufferLength);
-                dibujar();
-            })
-            .catch(function(err) {
-                // Si falla, esto nos dirá por qué en un cartelito
-                alert("Error de acceso: " + err.name + " - " + err.message);
-            });
-
             window.scrollTo(0, 1);
         }
+
         function dibujar() {
             requestAnimationFrame(dibujar);
             analyser.getByteFrequencyData(dataArray);
@@ -96,7 +107,6 @@
             canvas.width = canvas.parentElement.clientWidth;
             canvas.height = canvas.parentElement.clientHeight;
             
-            // Limpieza con rastro (alpha bajo para efecto ghosting)
             ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -105,17 +115,10 @@
 
             for(var i = 0; i < bufferLength; i++) {
                 var barHeight = dataArray[i] * 1.3;
-
-                // COLOR ÚNICO: VERDE NEÓN PURO
                 ctx.fillStyle = "#0f0";
-                
-                // RESPLANDOR (GLOW)
                 ctx.shadowBlur = 12;
                 ctx.shadowColor = "#0f0";
-                
-                // Dibujar la barra
                 ctx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
-
                 x += barWidth;
             }
         }
