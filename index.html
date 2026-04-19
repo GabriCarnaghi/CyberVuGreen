@@ -60,14 +60,21 @@
         var audioCtx, analyser, source, dataArray, bufferLength;
 
         function iniciarAudio() {
-            if (audioCtx) return;
+            // 1. Crear o reanudar el contexto (Vital para iOS)
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
             msg.style.display = 'none';
 
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            analyser = audioCtx.createAnalyser();
-            analyser.fftSize = 128; // Barras equilibradas
-
-            navigator.mediaDevices.getUserMedia({ audio: true })
+            // 2. Solicitar acceso al micrófono con sintaxis compatible
+            var constraints = { audio: true, video: false };
+            
+            navigator.mediaDevices.getUserMedia(constraints)
             .then(function(stream) {
                 source = audioCtx.createMediaStreamSource(stream);
                 source.connect(analyser);
@@ -76,11 +83,12 @@
                 dibujar();
             })
             .catch(function(err) {
-                msg.innerHTML = "ACCESS_DENIED";
+                // Si falla, esto nos dirá por qué en un cartelito
+                alert("Error de acceso: " + err.name + " - " + err.message);
             });
+
             window.scrollTo(0, 1);
         }
-
         function dibujar() {
             requestAnimationFrame(dibujar);
             analyser.getByteFrequencyData(dataArray);
