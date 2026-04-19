@@ -4,124 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>CyberVu Green Edition</title>
+    <title>CyberStream v4.2</title>
     <style>
-        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', Courier, monospace; color: #0f0; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; width: 100vw; }
-        
-        #canvas-wrapper { 
-            position: relative; 
-            width: 90%; 
-            height: 60%; 
-            border: 2px solid #040; 
-            background: #000; 
-            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2); 
-            overflow: hidden;
-        }
-
-        canvas { width: 100%; height: 100%; }
-        
-        .ui-label { 
-            position: absolute; 
-            font-size: 9px; 
-            color: #0f0; 
-            text-transform: uppercase; 
-            letter-spacing: 1px;
-            opacity: 0.7;
-        }
-
-        #msg { 
-            margin-top: 20px;
-            border: 1px solid #0f0; 
-            padding: 10px 20px; 
-            cursor: pointer; 
-            text-shadow: 0 0 5px #0f0;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink { 0% {opacity: 1;} 50% {opacity: 0.3;} 100% {opacity: 1;} }
+        body { background: #000; margin: 0; overflow: hidden; font-family: monospace; color: #0f0; }
+        canvas { width: 100vw; height: 100vh; display: block; }
+        .overlay { position: absolute; top: 10px; left: 10px; font-size: 10px; text-shadow: 0 0 5px #0f0; pointer-events: none; }
+        .scanline { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06)); background-size: 100% 4px, 3px 100%; pointer-events: none; }
     </style>
 </head>
-<body onclick="iniciarAudio()">
+<body>
+    <div class="scanline"></div>
+    <div class="overlay">>> SIGNAL_ANALYSIS: ACTIVE<br>>> ENCRYPTION: BYPASSING...<br>>> CORE_TEMP: 32C</div>
+    <canvas id="c"></canvas>
 
-    <div id="canvas-wrapper">
-        <div class="ui-label" style="top:5px; left:5px;">System: Active</div>
-        <div class="ui-label" style="top:5px; right:5px;">Mode: 2D_Spectrum</div>
-        <div class="ui-label" style="bottom:5px; left:50%; transform:translateX(-50%);">>> Frequency_Analysis_v4.2 <<</div>
-        <canvas id="canvas"></canvas>
-    </div>
-    
-    <div id="msg">INITIALIZE_LINK</div>
+    <script>
+        const canvas = document.getElementById('c');
+        const ctx = canvas.getContext('2d');
+        let w, h;
+        let bars = 40;
+        let data = Array(bars).fill(0);
 
-<script>
-        var canvas = document.getElementById('canvas');
-        var ctx = canvas.getContext('2d');
-        var msg = document.getElementById('msg');
-        var audioCtx, analyser, source, dataArray, bufferLength;
-
-        function iniciarAudio() {
-            try {
-                // 1. Compatibilidad total de AudioContext para iOS viejo
-                window.AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContext();
-
-                // 2. Compatibilidad total de getUserMedia (el truco para iPhone 5)
-                navigator.getUserMedia = (navigator.getUserMedia ||
-                                          navigator.webkitGetUserMedia ||
-                                          navigator.mozGetUserMedia ||
-                                          navigator.msGetUserMedia);
-
-                if (audioCtx.state === 'suspended') {
-                    audioCtx.resume();
-                }
-
-                if (navigator.getUserMedia) {
-                    navigator.getUserMedia({ audio: true }, 
-                        function(stream) {
-                            msg.style.display = 'none';
-                            analyser = audioCtx.createAnalyser();
-                            analyser.fftSize = 128;
-                            source = audioCtx.createMediaStreamSource(stream);
-                            source.connect(analyser);
-                            bufferLength = analyser.frequencyBinCount;
-                            dataArray = new Uint8Array(bufferLength);
-                            dibujar();
-                        }, 
-                        function(err) {
-                            alert("Error Mic: " + err.name);
-                        }
-                    );
-                } else {
-                    alert("Tu Safari no soporta micrófono web.");
-                }
-            } catch (e) {
-                alert("Error de inicio: " + e);
-            }
-            window.scrollTo(0, 1);
+        function resize() {
+            w = canvas.width = window.innerWidth;
+            h = canvas.height = window.innerHeight;
         }
 
-        function dibujar() {
-            requestAnimationFrame(dibujar);
-            analyser.getByteFrequencyData(dataArray);
+        function draw() {
+            // Efecto ghosting/persistencia
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.fillRect(0, 0, w, h);
 
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-            
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            const barWidth = w / bars;
 
-            var barWidth = (canvas.width / bufferLength);
-            var x = 0;
+            for (let i = 0; i < bars; i++) {
+                // Algoritmo matemático para simular ritmo (Seno + Ruido)
+                let target = Math.sin(Date.now() * 0.002 + i * 0.5) * 50 + 50;
+                target += Math.random() * 40; // Añade "nerviosismo" a la barra
+                
+                // Suavizado de movimiento (interpolación)
+                data[i] += (target - data[i]) * 0.2;
 
-            for(var i = 0; i < bufferLength; i++) {
-                var barHeight = dataArray[i] * 1.3;
-                ctx.fillStyle = "#0f0";
-                ctx.shadowBlur = 12;
-                ctx.shadowColor = "#0f0";
-                ctx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
-                x += barWidth;
+                const barHeight = (data[i] / 100) * (h * 0.7);
+                
+                // Estilo Verde Neón Puro
+                ctx.fillStyle = '#0f0';
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#0f0';
+                
+                // Dibujar bloque de la barra
+                ctx.fillRect(i * barWidth, h - barHeight, barWidth - 2, barHeight);
             }
+            requestAnimationFrame(draw);
         }
+
+        window.addEventListener('resize', resize);
+        resize();
+        draw();
     </script>
 </body>
 </html>
